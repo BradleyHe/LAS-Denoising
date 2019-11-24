@@ -7,6 +7,7 @@ function run_test_single_model
 %                   Department of Computer Science
 %
 % Given a model, evaluate the performance.
+    warning('off', 'MATLAB:MKDIR:DirectoryExists');
     basedir = '../../../';
     addpath([basedir, filesep, 'codes']);
     addpath([basedir, filesep, 'codes', filesep, 'denoising']);
@@ -33,58 +34,72 @@ function run_test_single_model
     % Load model
     load([ModelPath, filesep, 'denoising_model_', num2str(j),'.mat']);
     %%
-    savedir = {basedir, 'codes', '/', 'denoising', '/', 'denoised_set'};
+    ratio = 3;
 
     for i=1:length(dialects)
-	dialect = dialects{i};
+        dialect = dialects{i};
         dataset = {basedir, 'codes', '/', 'denoising', '/', 'Data', '/', 'TIMIT', '/', 'TEST', '/', char(dialect)};
         dataset_arr = dir(strrep(strjoin(dataset), ' ', ''))'; 
-	for j=1:length(dataset_arr)
+        for j=3:length(dataset_arr)
+            dataset = {basedir, 'codes', '/', 'denoising', '/', 'Data', '/', 'TIMIT', '/', 'TEST', '/', char(dialect)};
             speaker = dataset_arr(j);
-	    dataset{13} = char('/');
+            dataset{13} = char('/');
             dataset{14} = speaker.name;
-	    dataset{15} = char('/');
-	    dataset{16} = char('*.WAV');
-	    file_arr = dir(strrep(strjoin(dataset), ' ', ''))';
-	    for k=1:length(file_arr)
-		file = file_arr(k);
+            
+            save_dir = dataset;
+            save_dir{8} = char('TIMIT_Denoised');
+            disp(strrep(strjoin(save_dir), ' ', ''));
+            mkdir(strrep(strjoin(save_dir), ' ', ''));
+            
+            dataset{15} = char('/');
+            dataset{16} = char('*.wav');
+            file_arr = dir(strrep(strjoin(dataset), ' ', ''))';
+                
+            for k=1:length(file_arr)
+                file = file_arr(k);
                 dataset{15} = char('/');
                 dataset{16} = file.name;
-                disp(strrep(strjoin(dataset), ' ', ''));
-
-	%{
-		eI.saveDir = [baseDir, filesep, 'codes', filesep, 'denoising', ...
-        filesep, 'demo', filesep, '', filesep];
-    
-	    
-	index = 2;
-	[speech, fs] = audioread(['wav', filesep, 'original_speech', num2str(index), '.wav']);
-	[noise, fs] = audioread(['wav', filesep, 'original_noise',num2str(index),'.wav']);
-	    
-	r = snr(speech, noise);
-	factor = 10^((3-r)/20);
-
-	r = snr(speech, noise / factor);
-	disp(r);
+                file_path = strrep(strjoin(dataset), ' ', '');
+                
+                save_dir{15} = char('/');
+                save_dir{16} = file.name;
+                save_path = strrep(strjoin(save_dir), ' ', '');
 	 
-	x = speech + noise;    
-	eI.fs = fs;
-	  
-	audiowrite([eI.saveDir, filesep, 'noisy_speech', '.wav'], x, fs);
-	    
-	%%
-	output = test_denoising_general_kl_bss3(x', theta, eI, 'testall', 0);
-	%%
-	sz = 1024.*[1 1/4];
-	wn = sqrt( hann( sz(1), 'periodic')); % hann window
-	wav_signal = stft2( output.source_signal, sz(1), sz(2), 0, wn);
-	wav_noise = stft2( output.source_noise, sz(1), sz(2), 0, wn);
-	wav_signal = wav_signal./max(abs(wav_signal));
-	wav_noise = wav_noise./max(abs(wav_noise));    
+                noise_dir = {basedir, 'codes', '/', 'denoising', '/', 'Data', '/', 'noise'};
+                noise_arr = dir(strrep(strjoin(noise_dir), ' ', ''));
+                len = cast(length(noise_arr), 'uint8');
+                n = randi([3, len]);
 
-	audiowrite([eI.saveDir, filesep,'separated_speech',num2str(index),'.wav'], wav_signal, fs);
-	% audiowrite([eI.saveDir, filesep,'separated_noise',num2str(index),'.wav'], wav_noise, fs);
-  %}	
+                noise_dir{9} = char('/');
+                noise_dir{10} = noise_arr(n).name;
+                noise_path = strrep(strjoin(noise_dir), ' ', '');
+
+                %%
+                [speech, fs] = audioread(file_path);
+                [noise, fs] = audioread(noise_path);
+                noise = noise(1:length(speech));
+
+                r = snr(speech, noise);
+                factor = 10^((ratio-r)/20);
+
+                %% r = snr(speech, noise / factor);
+                %% disp(r);
+
+                x = speech + noise / factor;    
+                eI.fs = fs;
+
+                output = test_denoising_general_kl_bss3(x', theta, eI, 'testall', 0);
+
+                sz = 1024.*[1 1/4];
+                wn = sqrt( hann( sz(1), 'periodic')); % hann window
+                wav_signal = stft2( output.source_signal, sz(1), sz(2), 0, wn);
+                wav_noise = stft2( output.source_noise, sz(1), sz(2), 0, wn);
+                wav_signal = wav_signal./max(abs(wav_signal));
+                wav_noise = wav_noise./max(abs(wav_noise));    
+                
+                disp(save_path)
+                audiowrite(save_path, wav_signal, fs);
+                % audiowrite([eI.saveDir, filesep,'separated_noise',num2str(index),'.wav'], wav_noise, fs);
             end
         end
     end
