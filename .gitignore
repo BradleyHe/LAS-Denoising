@@ -1,2 +1,6 @@
 TIMIT
 TIMIT_Denoised
+las/Data
+*.csv
+*.pyc
+*.pkl
