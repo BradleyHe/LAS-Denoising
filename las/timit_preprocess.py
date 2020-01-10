@@ -20,7 +20,7 @@ RIFF_wav_postfix = '.wav'
 # default using 5% of data as validation
 val_split 	= 0.05 
 
-tir = [-10, -5, 0, 5, 10, 15, 20]
+tir = [-20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30]
 data_type = 'float32'
 
 paths = 'Data'
@@ -136,43 +136,48 @@ std_val = []
 ##### PREPROCESSING #####
 ### NOTE: This preprocessing is specifically used to ***test*** mixed voices, and is not intended to train the LAS model.
 
-for ratio in tir:
-  program_start_time = timeit.default_timer()
-  test_source_path	= os.path.join('Data/TIMIT_denoised_{}/TEST'.format(ratio))
-  target_path	= os.path.join('pkl/timit_mfcc_39_{}'.format(ratio))
+for category in ['noisy', 'denoised']:
+	for num in range(1, 11):
+		for ratio in tir:
+		  program_start_time = timeit.default_timer()
+		  test_source_path	= os.path.join('{}_data/{}/TIMIT_{}_{}/TEST'.format(category, num, category, ratio))
+		  target_path	= os.path.join('pkl/{}/timit_mfcc_39_{}_{}'.format(num, category, ratio))
 
-  mean_val = np.loadtxt('config/mean_val.txt')
-  std_val = np.loadtxt('config/std_val.txt')
+		  mean_val = np.loadtxt('config/mean_val.txt')
+		  std_val = np.loadtxt('config/std_val.txt')
 
-  
-  print()
-  X_train_all = []
-
-
-  print('Preprocessing testing data in {}'.format(test_source_path))
-  X_test, y_test = preprocess_dataset(test_source_path)
-  print('Preprocessing completed.')
-
-  print()
+		  
+		  print()
+		  X_train_all = []
 
 
-  print('Collected {} testing instances from {} (should be 1680 in complete TIMIT )'.format(len(X_test),test_source_path))
-  print()
-  print('Normalizing data to let mean=0, sd=1 for each channel.')
+		  print('Preprocessing testing data in {}'.format(test_source_path))
+		  X_test, y_test = preprocess_dataset(test_source_path)
+		  print('Preprocessing completed.')
 
-  if len(mean_val) == 0:
-          mean_val, std_val, _ = calc_norm_param(X_train_all)
+		  print()
 
-  X_test 	= normalize(X_test, mean_val, std_val)
-  X_test 	= set_type(X_test, data_type)
 
-  print()
-  print('Saving data to ',target_path)
-  with open(target_path + '.pkl', 'wb') as cPickle_file:
-      cPickle.dump(
-          [X_test, y_test], 
-          cPickle_file, 
-          protocol=cPickle.HIGHEST_PROTOCOL)
+		  print('Collected {} testing instances from {} (should be 1680 in complete TIMIT )'.format(len(X_test),test_source_path))
+		  print()
+		  print('Normalizing data to let mean=0, sd=1 for each channel.')
 
-  print()
-  print('Preprocessing completed in {:.3f} secs.'.format(timeit.default_timer() - program_start_time))
+		  if len(mean_val) == 0:
+		          mean_val, std_val, _ = calc_norm_param(X_train_all)
+
+		  X_test 	= normalize(X_test, mean_val, std_val)
+		  X_test 	= set_type(X_test, data_type)
+
+		  print()
+
+		  print('Saving data to ',target_path)
+		  
+		  os.makedirs('pkl/{}'.format(num), exist_ok=True)
+		  with open(target_path + '.pkl', 'wb') as cPickle_file:
+		      cPickle.dump(
+		          [X_test, y_test], 
+		          cPickle_file, 
+		          protocol=cPickle.HIGHEST_PROTOCOL)
+
+		  print()
+		  print('Preprocessing completed in {:.3f} secs.'.format(timeit.default_timer() - program_start_time))
