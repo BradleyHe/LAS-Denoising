@@ -3,6 +3,6 @@ TIMIT_Denoised
 las/Data
 denoised_data
 noisy_data
-*.csv
+
 *.pyc
 *.pkl
