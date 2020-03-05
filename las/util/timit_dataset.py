@@ -5,10 +5,10 @@ from torch.utils.data.dataset import Dataset
 
 def load_dataset(data_path,**kwargs):
     with open(data_path, 'rb') as cPickle_file:
-        [X_train, y_train, X_val, y_val, X_test, y_test] = cPickle.load(cPickle_file)
-    for data in [X_train, y_train, X_val, y_val, X_test, y_test]:
+        [X_train, y_train, X_val, y_val] = cPickle.load(cPickle_file)
+    for data in [X_train, y_train, X_val, y_val]:
         assert len(data) > 0
-    return X_train, y_train, X_val, y_val, X_test, y_test
+    return X_train, y_train, X_val, y_val
 
 # Input x: list of np array with shape (timestep,feature)
 # Return new_x : a np array of shape (len(x), padded_timestep, feature)

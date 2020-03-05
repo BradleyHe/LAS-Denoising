@@ -18,7 +18,7 @@ def load_dataset(data_path,**kwargs):
         assert len(data) > 0
     return X_test, y_test
 
-config_path = 'config/las_example_config.yaml'
+config_path = 'config/las_denoised_test_config.yaml'
 tir = [-20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30]
 
 conf = yaml.load(open(config_path,'r'))
@@ -40,7 +40,7 @@ for category in ['noisy', 'denoised']:
             speller = torch.load(conf['training_parameter']['pretrained_speller_path'], map_location=lambda storage, loc: storage)
             optimizer = torch.optim.Adam([{'params':listener.parameters()}, {'params':speller.parameters()}], lr=conf['training_parameter']['learning_rate'])
 
-            for batch_index,(batch_data,batch_label) in enumerate(test_set):h
+            for batch_index,(batch_data,batch_label) in enumerate(test_set):
               batch_loss, batch_ler = batch_iterator(batch_data, batch_label, listener, speller, optimizer, 0, is_training=False, **conf['model_parameter'])
               total += np.array(batch_ler).mean()
               global_step += 1
@@ -50,6 +50,6 @@ for category in ['noisy', 'denoised']:
             print()
 
             df = pd.DataFrame(data)
-            df.to_csv('pkl/{}_{}.csv'.format(num, category))
+            df.to_csv('pkl/{}_{}_trained.csv'.format(num, category))
         df = pd.DataFrame(data)
-        df.to_csv('pkl/{}_{}.csv'.format(num, category))
+        df.to_csv('pkl/{}_{}_trained.csv'.format(num, category))

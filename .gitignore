@@ -6,3 +6,5 @@ noisy_data
 .python-version
 *.pyc
 *.pkl
+*.wav
+*.PHN
